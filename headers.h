@@ -9,26 +9,32 @@
 #define WORDLEN 30
 
 typedef struct {
-    char word[WORDLEN];
-    float stdev;
-    int count;
+	char word[WORDLEN];
+	float stdev;
+	int count;
 
 } word;
 
 typedef struct {
-    word *words;
-    int word_nr;
+	word *words;
+	int word_nr;
 } keywords;
 
 typedef struct {
-    int *word_count, n;
-    char mail_nr[20];
+	int *word_count, n;
+	char mail_nr[20];
 } email;
 
-int email_nr();
+int email_nr(void);
 
-void read_keywords(keywords *);
+void read_keywords(keywords *keyword);
 
-void int_to_char(char *, int);
+void int_to_char(char *str, int nr);
 
-void search_words(email *, keywords *);
+void search_words(email *emails, keywords *keyword);
+
+void free_all(email *emails, keywords *keyword);
+
+void print_task1(email *emails, keywords *keyword);
+
+void stdev(email *emails, keywords *keyword);
