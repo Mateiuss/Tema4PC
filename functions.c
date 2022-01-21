@@ -188,13 +188,15 @@ float avg_sizef(email *emails)
 
 void keywords_score(email *emails, keywords *keyword)
 {
-	int avg_size = avg_sizef(emails) / emails->n;
+	float avg_size = avg_sizef(emails) / emails->n;
 
 	for (int i = 0; i < emails->n; i++) {
 		emails[i].key_score = 0;
 
 		for (int j = 0; j < keyword->word_nr; j++) {
-			emails[i].key_score += (float)emails[i].word_count[j] * avg_size / emails[i].size;
+			float count = emails[i].word_count[j];
+			int size = emails[i].size;
+			emails[i].key_score += count * avg_size / size;
 		}
 	}
 }
@@ -213,7 +215,8 @@ void has_caps(email *emails)
 
 		while (fgets(str, 1000, fp)) {
 			if (in_body == 1 || strstr(str, "Body:")) {
-				for (int i = in_body ? 0 : strlen("Body:"); i < strlen(str); i++) {
+				int i = in_body ? 0 : strlen("Body:");
+				for (i ; i < strlen(str); i++) {
 					if (str[i] >= 'A' && str[i] <= 'Z')
 						caps++;
 				}
@@ -241,8 +244,14 @@ void save_spammers(spammers *spams)
 
 	spams->spammers = malloc(n * sizeof(spammer));
 
-	for (int i = 0; i < n; i++)
-		fscanf(fp, "%s %d", spams->spammers[i].address, &spams->spammers[i].score);
+	char *address;
+	int *score;
+
+	for (int i = 0; i < n; i++) {
+		address = spams->spammers[i].address;
+		score = &spams->spammers[i].score;
+		fscanf(fp, "%s %d", address, score);
+	}
 
 	fclose(fp);
 }
@@ -279,10 +288,17 @@ void check_spammers(email *emails, spammers *spams)
 
 void is_spamf(email *emails)
 {
+	float key_score;
+	int has_caps;
+	int spam_score;
+
 	for (int i = 0; i < emails->n; i++) {
 		float score = 0;
+		key_score = emails[i].key_score;
+		has_caps = emails[i].has_caps;
+		spam_score = emails[i].spam_score;
 
-		score = 10 * emails[i].key_score + 30 * emails[i].has_caps + emails[i].spam_score;
+		score = 10 * key_score + 30 * has_caps + spam_score;
 
 		emails[i].is_spam = score > 35 ? 1 : 0;
 	}
