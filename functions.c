@@ -1,5 +1,6 @@
 #include "headers.h"
 
+// Functie care adauga caracterul null la sfaristul unui string in loc de \n
 void add_null(char *str)
 {
 	if (str[strlen(str) - 1] == '\n')
@@ -60,7 +61,7 @@ void read_keywords(keywords *keyword)
 	fgetc(fp);
 	int word_nr = keyword->word_nr;
 
-	keyword->words = malloc(word_nr * sizeof(word));
+	keyword->words = malloc(word_nr * sizeof(kword));
 
 	for (int i = 0; i < word_nr; i++) {
 		fgets(keyword->words[i].word, WORDLEN, fp);
@@ -72,18 +73,45 @@ void read_keywords(keywords *keyword)
 	fclose(fp);
 }
 
-void find(email *email, keywords *keyword)
+void add_keywords(keywords *keyword)
 {
-	FILE *fp = fopen(email->mail_nr, "r");
+	keyword->ext_word_nr = keyword->word_nr;
 
-	char *str = malloc(1000 * sizeof(char));
+	FILE *fp = fopen(ADD_KEYWORDS, "r");
 
-	for (int i = 0; i < keyword->word_nr; i++) {
+	int add = 0;
+
+	fscanf(fp, "%d", &add);
+	fgetc(fp);
+
+	keyword->ext_word_nr += add;
+
+	int word_nr = keyword->ext_word_nr;
+
+	keyword->words = realloc(keyword->words, word_nr * sizeof(kword));
+
+	for (int i = keyword->word_nr; i < word_nr; i++) {
+		fgets(keyword->words[i].word, WORDLEN, fp);
+		add_null(keyword->words[i].word);
+
+		keyword->words[i].count = 0;
+	}
+
+	fclose(fp);
+}
+
+void find(email *mail, keywords *keyword)
+{
+	FILE *fp = fopen(mail->mail_nr, "r");
+
+	char *str = malloc(STRINGLEN * sizeof(char));
+
+	for (int i = 0; i < keyword->ext_word_nr; i++) {
 		fseek(fp, 0, SEEK_SET);
 
 		int in_body = 0;
 
-		while (fgets(str, 1000, fp)) {
+		while (fgets(str, STRINGLEN, fp)) {
 			char *p = str;
 
 			if (in_body == 1 || strstr(str, "Body:")) {
@@ -93,7 +121,7 @@ void find(email *email, keywords *keyword)
 					if (p[0] != 0)
 						p = strcasestr(p, keyword->words[i].word) + 1;
 					keyword->words[i].count++;
-					email->word_count[i]++;
+					mail->word_count[i]++;
 				}
 			}
 		}
@@ -103,15 +131,15 @@ void find(email *email, keywords *keyword)
 	fclose(fp);
 }
 
-void search_words(email *emails, keywords *keyword)
+void search_words(emails *mails, keywords *keyword)
 {
-	for (int i = 0; i < emails->n; i++)
-		find(emails + i, keyword);
+	for (int i = 0; i < mails->mail_nr; i++)
+		find(mails->mail + i, keyword);
 }
 
-void print_task1(email *emails, keywords *keyword)
+void print_task1(keywords *keyword)
 {
-	FILE *fp = fopen("statistics.out", "w");
+	FILE *fp = fopen(STATISTICS, "w");
 
 	for (int i = 0; i < keyword->word_nr; i++) {
 		char *str = keyword->words[i].word;
@@ -124,20 +152,20 @@ void print_task1(email *emails, keywords *keyword)
 	fclose(fp);
 }
 
-void stdev(email *emails, keywords *keyword)
+void stdev(emails *mails, keywords *keyword)
 {
-	int n = emails->n;
+	int n = mails->mail_nr;
 
-	for (int i = 0; i < keyword->word_nr; i++) {
+	for (int i = 0; i < keyword->ext_word_nr; i++) {
 		float ma = 0, stdev = 0;
 
 		for (int j = 0; j < n; j++)
-			ma = ma + emails[j].word_count[i];
+			ma = ma + mails->mail[j].word_count[i];
 
 		ma = ma / n;
 
 		for (int j = 0; j < n; j++) {
-			float count = emails[j].word_count[i];
+			float count = mails->mail[j].word_count[i];
 			stdev = stdev + (count - ma) * (count - ma);
 		}
 
@@ -147,20 +175,20 @@ void stdev(email *emails, keywords *keyword)
 	}
 }
 
-float avg_sizef(email *emails)
+float avg_sizef(emails *mails)
 {
 	int len = 0;
 
-	char *str = malloc(1000 * sizeof(char));
+	char *str = malloc(STRINGLEN * sizeof(char));
 
-	for (int i = 0; i < emails->n; i++) {
-		FILE *fp = fopen(emails[i].mail_nr, "r");
+	for (int i = 0; i < mails->mail_nr; i++) {
+		FILE *fp = fopen(mails->mail[i].mail_nr, "r");
 
-		emails[i].size = 0;
+		mails->mail[i].size = 0;
 
 		int in_body = 0;
 
-		while (fgets(str, 1000, fp)) {
+		while (fgets(str, STRINGLEN, fp)) {
 			if (in_body == 1 || strstr(str, "Body:")) {
 				add_null(str);
 
@@ -168,12 +196,12 @@ float avg_sizef(email *emails)
 					char *p = str;
 					p = p + strlen("Body:");
 					len += strlen(p);
-					emails[i].size += strlen(p);
+					mails->mail[i].size += strlen(p);
 					in_body = 1;
 				} else {
 					int str_len = strlen(str);
 					len += str_len;
-					emails[i].size += str_len;
+					mails->mail[i].size += str_len;
 				}
 			}
 		}
@@ -186,34 +214,34 @@ float avg_sizef(email *emails)
 	return len;
 }
 
-void keywords_score(email *emails, keywords *keyword)
+void keywords_score(emails *mails, keywords *keyword)
 {
-	float avg_size = avg_sizef(emails) / emails->n;
+	float avg_size = avg_sizef(mails) / mails->mail_nr;
 
-	for (int i = 0; i < emails->n; i++) {
-		emails[i].key_score = 0;
+	for (int i = 0; i < mails->mail_nr; i++) {
+		mails->mail[i].key_score = 0;
 
-		for (int j = 0; j < keyword->word_nr; j++) {
-			float count = emails[i].word_count[j];
-			int size = emails[i].size;
-			emails[i].key_score += count * avg_size / size;
+		for (int j = 0; j < keyword->ext_word_nr; j++) {
+			float count = mails->mail[i].word_count[j];
+			int size = mails->mail[i].size;
+			mails->mail[i].key_score += count * avg_size / size;
 		}
 	}
 }
 
-void has_caps(email *emails)
+void has_caps(emails *mails)
 {
-	char *str = malloc(1000 * sizeof(char));
+	char *str = malloc(STRINGLEN * sizeof(char));
 
-	for (int i = 0; i < emails->n; i++) {
-		emails[i].has_caps = 0;
+	for (int i = 0; i < mails->mail_nr; i++) {
+		mails->mail[i].has_caps = 0;
 
-		FILE *fp = fopen(emails[i].mail_nr, "r");
+		FILE *fp = fopen(mails->mail[i].mail_nr, "r");
 
 		int in_body = 0;
 		int caps = 0;
 
-		while (fgets(str, 1000, fp)) {
+		while (fgets(str, STRINGLEN, fp)) {
 			if (in_body == 1 || strstr(str, "Body:")) {
 				int i = in_body ? 0 : strlen("Body:");
 				for (i ; i < strlen(str); i++) {
@@ -225,7 +253,7 @@ void has_caps(email *emails)
 					in_body = 1;
 			}
 		}
-		emails[i].has_caps = caps > (float)emails[i].size / 2 ? 1 : 0;
+		mails->mail[i].has_caps = caps > (float)mails->mail[i].size / 2 ? 1 : 0;
 
 		fclose(fp);
 	}
@@ -256,14 +284,14 @@ void save_spammers(spammers *spams)
 	fclose(fp);
 }
 
-void check_spammers(email *emails, spammers *spams)
+void check_spammers(emails *mails, spammers *spams)
 {
 	char *str = malloc(MAILLEN * sizeof(char));
 
-	for (int i = 0; i < emails->n; i++) {
-		FILE *fp = fopen(emails[i].mail_nr, "r");
+	for (int i = 0; i < mails->mail_nr; i++) {
+		FILE *fp = fopen(mails->mail[i].mail_nr, "r");
 
-		emails[i].spam_score = 0;
+		mails->mail[i].spam_score = 0;
 
 		int in_from = 0;
 
@@ -273,7 +301,7 @@ void check_spammers(email *emails, spammers *spams)
 
 				for (int j = 0; j < spams->spam_nr; j++) {
 					if (strstr(str, spams->spammers[j].address)) {
-						emails[i].spam_score = spams->spammers[j].score;
+						mails->mail[i].spam_score = spams->spammers[j].score;
 						break;
 					}
 				}
@@ -286,39 +314,40 @@ void check_spammers(email *emails, spammers *spams)
 	free(str);
 }
 
-void is_spamf(email *emails)
+void is_spamf(emails *mails)
 {
 	float key_score;
 	int has_caps;
 	int spam_score;
 
-	for (int i = 0; i < emails->n; i++) {
+	for (int i = 0; i < mails->mail_nr; i++) {
 		float score = 0;
-		key_score = emails[i].key_score;
-		has_caps = emails[i].has_caps;
-		spam_score = emails[i].spam_score;
+		key_score = mails->mail[i].key_score;
+		has_caps = mails->mail[i].has_caps;
+		spam_score = mails->mail[i].spam_score;
 
 		score = 10 * key_score + 30 * has_caps + spam_score;
 
-		emails[i].is_spam = score > 35 ? 1 : 0;
+		mails->mail[i].is_spam = score > 34 ? 1 : 0;
 	}
 }
 
-void print_task2(email *emails)
+void print_task2(emails *mails)
 {
 	FILE *fp = fopen("prediction.out", "w");
 
-	for (int i = 0; i < emails->n; i++)
-		fprintf(fp, "%d\n", emails[i].is_spam);
+	for (int i = 0; i < mails->mail_nr; i++)
+		fprintf(fp, "%d\n", mails->mail[i].is_spam);
 
 	fclose(fp);
 }
 
-void free_all(email *emails, keywords *keyword, spammers *spams)
+void free_all(emails *mails, keywords *keyword, spammers *spams)
 {
-	for (int i = 0; i < emails->n; i++)
-		free(emails[i].word_count);
-	free(emails);
+	for (int i = 0; i < mails->mail_nr; i++)
+		free(mails->mail[i].word_count);
+	free(mails->mail);
+	free(mails);
 
 	free(spams->spammers);
 	free(spams);
