@@ -4,26 +4,29 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#define STATISTICS "statistics.out"
 #define EMAILS "data/emails"
 #define KEYWORDS "data/keywords"
+#define ADD_KEYWORDS "addition_words"
 #define SPAMMERS "data/spammers"
 #define WORDLEN 50
 #define MAILLEN 100
+#define STRINGLEN 1000
 
 typedef struct {
 	char word[WORDLEN];
 	float stdev;
 	int count;
-
-} word;
+} kword;
 
 typedef struct {
-	word *words;
+	kword *words;
 	int word_nr;
+	int ext_word_nr;
 } keywords;
 
 typedef struct {
-	int *word_count, n;
+	int *word_count;
 	int size;
 	int has_caps;
 	int spam_score;
@@ -31,6 +34,11 @@ typedef struct {
 	float key_score;
 	char mail_nr[20];
 } email;
+
+typedef struct {
+	email *mail;
+	int mail_nr;
+} emails;
 
 typedef struct {
 	char address[MAILLEN];
@@ -46,26 +54,28 @@ int email_nr(void);
 
 void read_keywords(keywords *keyword);
 
+void add_keywords(keywords *keyword);
+
 void int_to_char(char *str, int nr);
 
-void search_words(email *emails, keywords *keyword);
+void search_words(emails *mails, keywords *keyword);
 
-void free_all(email *emails, keywords *keyword, spammers *spams);
+void free_all(emails *mails, keywords *keyword, spammers *spams);
 
-void print_task1(email *emails, keywords *keyword);
+void print_task1(keywords *keyword);
 
-void stdev(email *emails, keywords *keyword);
+void stdev(emails *mails, keywords *keyword);
 
-float avg_sizef(email *emails);
+float avg_sizef(emails *mails);
 
-void keywords_score(email *emails, keywords *keyword);
+void keywords_score(emails *mails, keywords *keyword);
 
-void has_caps(email *emails);
+void has_caps(emails *mails);
 
 void save_spammers(spammers *spams);
 
-void check_spammers(email *emails, spammers *spams);
+void check_spammers(emails *mails, spammers *spams);
 
-void is_spamf(email *emails);
+void is_spamf(emails *mails);
 
-void print_task2(email *emails);
+void print_task2(emails *mails);
