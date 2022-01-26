@@ -177,6 +177,14 @@ void stdev(emails *mails, keywords *keyword)
 	}
 }
 
+void is_char(email *mail, char *p)
+{
+	for (int j = 0; j < strlen(p); j++) {
+		if ((p[j] >= 'a' && p[j] <= 'z') || (p[j] >= 'A' && p[j] <= 'Z'))
+			mail->char_size++;
+	}
+}
+
 float avg_sizef(emails *mails)
 {
 	int len = 0;
@@ -187,6 +195,7 @@ float avg_sizef(emails *mails)
 		FILE *fp = fopen(mails->mail[i].mail_nr, "r");
 
 		mails->mail[i].size = 0;
+		mails->mail[i].char_size = 0;
 
 		int in_body = 0;
 
@@ -198,12 +207,18 @@ float avg_sizef(emails *mails)
 					char *p = str;
 					p = p + strlen("Body:");
 					len += strlen(p);
+
 					mails->mail[i].size += strlen(p);
+
+					is_char(mails->mail + i, p);
+
 					in_body = 1;
 				} else {
 					int str_len = strlen(str);
 					len += str_len;
 					mails->mail[i].size += str_len;
+
+					is_char(mails->mail + i, str);
 				}
 			}
 		}
@@ -256,7 +271,7 @@ void has_caps(emails *mails)
 			}
 		}
 
-		float size = mails->mail[i].size;
+		float size = mails->mail[i].char_size;
 		mails->mail[i].has_caps = caps > size / 2 ? 1 : 0;
 
 		fclose(fp);
