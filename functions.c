@@ -345,11 +345,11 @@ void is_spamf(emails *mails)
 		has_caps = mails->mail[i].has_caps;
 		spam_score = mails->mail[i].spam_score;
 
-		score = 10 * key_score + 30 * has_caps + spam_score;
+		score = 7 * key_score + 30 * has_caps + spam_score;
 
 		mails->mail[i].final_score = score;
 
-		mails->mail[i].is_spam = score > 37 ? 1 : 0;
+		mails->mail[i].is_spam = score > 35 ? 1 : 0;
 	}
 }
 

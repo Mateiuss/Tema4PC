@@ -7,7 +7,7 @@
 #define STATISTICS "statistics.out"
 #define EMAILS "data/emails"
 #define KEYWORDS "data/keywords"
-#define ADD_KEYWORDS "addition_words"
+#define ADD_KEYWORDS "additional_keywords"
 #define SPAMMERS "data/spammers"
 #define WORDLEN 50
 #define MAILLEN 100
@@ -28,10 +28,12 @@ typedef struct {
 typedef struct {
 	int *word_count;
 	int size;
+	int char_size;
 	int has_caps;
 	int spam_score;
 	int is_spam;
 	float key_score;
+	float final_score;
 	char mail_nr[20];
 } email;
 
