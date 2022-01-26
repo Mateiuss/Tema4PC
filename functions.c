@@ -1,5 +1,7 @@
 #include "headers.h"
 
+// Test branch
+
 // Functie care adauga caracterul null la sfaristul unui string in loc de \n
 void add_null(char *str)
 {
@@ -175,6 +177,14 @@ void stdev(emails *mails, keywords *keyword)
 	}
 }
 
+void is_char(email *mail, char *p)
+{
+	for (int j = 0; j < strlen(p); j++) {
+		if ((p[j] >= 'a' && p[j] <= 'z') || (p[j] >= 'A' && p[j] <= 'Z'))
+			mail->char_size++;
+	}
+}
+
 float avg_sizef(emails *mails)
 {
 	int len = 0;
@@ -185,6 +195,7 @@ float avg_sizef(emails *mails)
 		FILE *fp = fopen(mails->mail[i].mail_nr, "r");
 
 		mails->mail[i].size = 0;
+		mails->mail[i].char_size = 0;
 
 		int in_body = 0;
 
@@ -196,12 +207,18 @@ float avg_sizef(emails *mails)
 					char *p = str;
 					p = p + strlen("Body:");
 					len += strlen(p);
+
 					mails->mail[i].size += strlen(p);
+
+					is_char(mails->mail + i, p);
+
 					in_body = 1;
 				} else {
 					int str_len = strlen(str);
 					len += str_len;
 					mails->mail[i].size += str_len;
+
+					is_char(mails->mail + i, str);
 				}
 			}
 		}
@@ -253,7 +270,9 @@ void has_caps(emails *mails)
 					in_body = 1;
 			}
 		}
-		mails->mail[i].has_caps = caps > (float)mails->mail[i].size / 2 ? 1 : 0;
+
+		float size = mails->mail[i].char_size;
+		mails->mail[i].has_caps = caps > size / 2 ? 1 : 0;
 
 		fclose(fp);
 	}
@@ -326,9 +345,11 @@ void is_spamf(emails *mails)
 		has_caps = mails->mail[i].has_caps;
 		spam_score = mails->mail[i].spam_score;
 
-		score = 10 * key_score + 30 * has_caps + spam_score;
+		score = 7 * key_score + 30 * has_caps + spam_score;
 
-		mails->mail[i].is_spam = score > 34 ? 1 : 0;
+		mails->mail[i].final_score = score;
+
+		mails->mail[i].is_spam = score > 35 ? 1 : 0;
 	}
 }
 
