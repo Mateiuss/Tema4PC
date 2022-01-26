@@ -1,5 +1,7 @@
 #include "headers.h"
 
+// Test branch
+
 // Functie care adauga caracterul null la sfaristul unui string in loc de \n
 void add_null(char *str)
 {
@@ -253,7 +255,9 @@ void has_caps(emails *mails)
 					in_body = 1;
 			}
 		}
-		mails->mail[i].has_caps = caps > (float)mails->mail[i].size / 2 ? 1 : 0;
+
+		float size = mails->mail[i].size;
+		mails->mail[i].has_caps = caps > size / 2 ? 1 : 0;
 
 		fclose(fp);
 	}
@@ -328,7 +332,9 @@ void is_spamf(emails *mails)
 
 		score = 10 * key_score + 30 * has_caps + spam_score;
 
-		mails->mail[i].is_spam = score > 34 ? 1 : 0;
+		mails->mail[i].final_score = score;
+
+		mails->mail[i].is_spam = score > 37 ? 1 : 0;
 	}
 }
 
