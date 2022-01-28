@@ -30,6 +30,7 @@ typedef struct {
 	int size;
 	int char_size;
 	int has_caps;
+	int is_long;
 	int spam_score;
 	int is_spam;
 	float key_score;
@@ -40,6 +41,7 @@ typedef struct {
 typedef struct {
 	email *mail;
 	int mail_nr;
+	float avg_size;
 } emails;
 
 typedef struct {
@@ -81,3 +83,5 @@ void check_spammers(emails *mails, spammers *spams);
 void is_spamf(emails *mails);
 
 void print_task2(emails *mails);
+
+void is_longf(emails *mails);

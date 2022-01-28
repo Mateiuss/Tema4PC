@@ -234,6 +234,7 @@ float avg_sizef(emails *mails)
 void keywords_score(emails *mails, keywords *keyword)
 {
 	float avg_size = avg_sizef(mails) / mails->mail_nr;
+	mails->avg_size = avg_size;
 
 	for (int i = 0; i < mails->mail_nr; i++) {
 		mails->mail[i].key_score = 0;
@@ -278,6 +279,16 @@ void has_caps(emails *mails)
 	}
 
 	free(str);
+}
+
+void is_longf(emails *mails)
+{
+	float avg_size = mails->avg_size;
+	for (int i = 0; i < mails->mail_nr; i++) {
+		int size = mails->mail[i].size;
+
+		mails->mail[i].is_long = size / 1.8 >= avg_size ? 1 : 0;
+	}
 }
 
 void save_spammers(spammers *spams)
@@ -336,16 +347,19 @@ void check_spammers(emails *mails, spammers *spams)
 void is_spamf(emails *mails)
 {
 	float key_score;
+	float avg_size = mails->avg_size;
 	int has_caps;
 	int spam_score;
+	int is_long;
 
 	for (int i = 0; i < mails->mail_nr; i++) {
 		float score = 0;
 		key_score = mails->mail[i].key_score;
 		has_caps = mails->mail[i].has_caps;
 		spam_score = mails->mail[i].spam_score;
+		is_long = mails->mail->is_long;
 
-		score = 7 * key_score + 30 * has_caps + spam_score;
+		score = 7 * key_score + 30 * has_caps + spam_score + 30 * is_long;
 
 		mails->mail[i].final_score = score;
 

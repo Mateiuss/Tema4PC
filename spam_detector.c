@@ -42,6 +42,8 @@ int main(void)
 
 	has_caps(mails);
 
+	is_longf(mails);
+
 	save_spammers(spams);
 
 	check_spammers(mails, spams);
