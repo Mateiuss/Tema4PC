@@ -27,6 +27,8 @@ typedef struct {
 
 typedef struct {
 	int *word_count;
+	int recon_words;
+	int link_count;
 	int size;
 	int char_size;
 	int has_caps;
@@ -85,3 +87,5 @@ void is_spamf(emails *mails);
 void print_task2(emails *mails);
 
 void is_longf(emails *mails);
+
+void logs(emails *mails, keywords *keyword);

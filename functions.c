@@ -106,6 +106,8 @@ void find(email *mail, keywords *keyword)
 {
 	FILE *fp = fopen(mail->mail_nr, "r");
 
+	mail->recon_words = 0;
+
 	char *str = malloc(STRINGLEN * sizeof(char));
 
 	for (int i = 0; i < keyword->ext_word_nr; i++) {
@@ -124,6 +126,7 @@ void find(email *mail, keywords *keyword)
 						p = strcasestr(p, keyword->words[i].word) + 1;
 					keyword->words[i].count++;
 					mail->word_count[i]++;
+					mail->recon_words++;
 				}
 			}
 		}
@@ -287,10 +290,22 @@ void is_longf(emails *mails)
 	for (int i = 0; i < mails->mail_nr; i++) {
 		int size = mails->mail[i].size;
 
-		mails->mail[i].is_long = size / 1.8 >= avg_size ? 1 : 0;
+		mails->mail[i].is_long = size / 2.0 >= avg_size ? 1 : 0;
 	}
 }
 
+/*void link_count(emails *mails)
+{
+	char *str = malloc(STRINGLEN * sizeof(char));
+
+	for (int i = 0; i < mails->mail_nr; i++) {
+		FILE *fp = fopen(mails->mail->mail_nr, "r");
+
+		fclose(fp);
+	}
+
+	free(str);
+}*/
 void save_spammers(spammers *spams)
 {
 	FILE *fp = fopen(SPAMMERS, "r");
@@ -359,7 +374,7 @@ void is_spamf(emails *mails)
 		spam_score = mails->mail[i].spam_score;
 		is_long = mails->mail->is_long;
 
-		score = 7 * key_score + 30 * has_caps + spam_score + 30 * is_long;
+		score = 7 * key_score + 30 * has_caps + spam_score;
 
 		mails->mail[i].final_score = score;
 
@@ -389,4 +404,42 @@ void free_all(emails *mails, keywords *keyword, spammers *spams)
 
 	free(keyword->words);
 	free(keyword);
+}
+
+void logs(emails *mails, keywords *keyword)
+{
+	FILE *fp = fopen("logs.txt", "w");
+
+	for (int i = 0; i < keyword->ext_word_nr; i++) {
+		if (i == 0)
+			fprintf(fp, "-----Keywords----------------\n");
+		else if (i == keyword->word_nr)
+			fprintf(fp, "-----Additional Keywords-----\n");
+		fprintf(fp, "%s:\n", keyword->words[i].word);
+		fprintf(fp, "\tstdev = %.6f\n", keyword->words[i].stdev);
+		fprintf(fp, "\tcount = %d\n", keyword->words[i].count);
+	}
+
+	for (int i = 0; i < mails->mail_nr; i++) {
+		if (i == 0)
+			fprintf(fp, "-------------Mails-----------\n");
+
+		fprintf(fp, "%s:\n", mails->mail[i].mail_nr);
+		fprintf(fp, "\tsize = %d\n", mails->mail[i].size);
+		fprintf(fp, "\tchar_size = %d\n", mails->mail[i].char_size);
+		fprintf(fp, "\thas_caps = %d\n", mails->mail[i].has_caps);
+		fprintf(fp, "\tspam_score = %d\n", mails->mail[i].spam_score);
+		fprintf(fp, "\tkey_score = %.6f\n", mails->mail[i].key_score);
+		fprintf(fp, "\tfinal_score = %.6f\n", mails->mail[i].final_score);
+		fprintf(fp, "\tis_spam = %d\n", mails->mail[i].is_spam);
+
+		fprintf(fp, "-----------Word counter---------------\n");
+		for (int j = 0; j < keyword->ext_word_nr; j++) {
+			fprintf(fp, "\t%s :", keyword->words[j].word);
+			fprintf(fp, " %d\n", mails->mail[i].word_count[j]);
+		}
+		fprintf(fp, "-----------Finished Word counter--------------\n");
+	}
+
+	fclose(fp);
 }
