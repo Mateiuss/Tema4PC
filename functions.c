@@ -1,7 +1,5 @@
 #include "headers.h"
 
-// Test branch
-
 // Functie care adauga caracterul null la sfaristul unui string in loc de \n
 void add_null(char *str)
 {
@@ -9,6 +7,7 @@ void add_null(char *str)
 		str[strlen(str) - 1] = 0;
 }
 
+// Functie care returneaza lungiea unui numar
 int sizeof_int(int nr)
 {
 	if (nr == 0)
@@ -22,6 +21,7 @@ int sizeof_int(int nr)
 	return k;
 }
 
+// Functie care memoreaza in sirul str numarul email-ului memorat in nr
 void int_to_char(char *str, int nr)
 {
 	char s[5];
@@ -39,6 +39,7 @@ void int_to_char(char *str, int nr)
 	strcat(str, s);
 }
 
+// Functie care returneaza numarul de fisiere dintr-un director
 int email_nr(void)
 {
 	DIR *dirp = opendir(EMAILS);
@@ -55,6 +56,7 @@ int email_nr(void)
 	return file_count;
 }
 
+// Functie care memoreaza keyword-urile date
 void read_keywords(keywords *keyword)
 {
 	FILE *fp = fopen(KEYWORDS, "r");
@@ -75,6 +77,7 @@ void read_keywords(keywords *keyword)
 	fclose(fp);
 }
 
+// Functie care memoreaza keyword-urile adaugate de mine
 void add_keywords(keywords *keyword)
 {
 	keyword->ext_word_nr = keyword->word_nr;
@@ -102,6 +105,7 @@ void add_keywords(keywords *keyword)
 	fclose(fp);
 }
 
+// Functie care cauta in mail-ul "mail" fiecare dintre keyword-uri
 void find(email *mail, keywords *keyword)
 {
 	FILE *fp = fopen(mail->mail_nr, "r");
@@ -124,6 +128,7 @@ void find(email *mail, keywords *keyword)
 				while (strcasestr(p, keyword->words[i].word)) {
 					if (p[0] != 0)
 						p = strcasestr(p, keyword->words[i].word) + 1;
+
 					keyword->words[i].count++;
 					mail->word_count[i]++;
 					mail->recon_words++;
@@ -136,12 +141,14 @@ void find(email *mail, keywords *keyword)
 	fclose(fp);
 }
 
+// Functie care parcurge fiecare mail si cauta aparitiile keyword-urilor
 void search_words(emails *mails, keywords *keyword)
 {
 	for (int i = 0; i < mails->mail_nr; i++)
 		find(mails->mail + i, keyword);
 }
 
+// Functie care afiseaza datele obtinute pentru primul task
 void print_task1(keywords *keyword)
 {
 	FILE *fp = fopen(STATISTICS, "w");
@@ -157,9 +164,11 @@ void print_task1(keywords *keyword)
 	fclose(fp);
 }
 
+// Functie care calculeaza de iatia standard pentru fiecare mail
 void stdev(emails *mails, keywords *keyword)
 {
 	int n = mails->mail_nr;
+	keyword->avg_stdev = 0;
 
 	for (int i = 0; i < keyword->ext_word_nr; i++) {
 		float ma = 0, stdev = 0;
@@ -177,9 +186,14 @@ void stdev(emails *mails, keywords *keyword)
 		stdev = sqrt(stdev / n);
 
 		keyword->words[i].stdev = stdev;
+
+		keyword->avg_stdev += stdev;
 	}
+
+	keyword->avg_stdev /= n;
 }
 
+// Functie care numara fiecare litera din sirul "p"
 void is_char(email *mail, char *p)
 {
 	for (int j = 0; j < strlen(p); j++) {
@@ -188,6 +202,7 @@ void is_char(email *mail, char *p)
 	}
 }
 
+// Functie care calculeaza marimea medie a mail-urilor
 float avg_sizef(emails *mails)
 {
 	int len = 0;
@@ -234,9 +249,12 @@ float avg_sizef(emails *mails)
 	return len;
 }
 
+// Functie care calculeaza keywords score-ul pentru fiecare mail
 void keywords_score(emails *mails, keywords *keyword)
 {
 	float avg_size = avg_sizef(mails) / mails->mail_nr;
+	float avg_stdev = keyword->avg_stdev;
+
 	mails->avg_size = avg_size;
 
 	for (int i = 0; i < mails->mail_nr; i++) {
@@ -244,12 +262,18 @@ void keywords_score(emails *mails, keywords *keyword)
 
 		for (int j = 0; j < keyword->ext_word_nr; j++) {
 			float count = mails->mail[i].word_count[j];
+			float stdev = keyword->words[j].stdev;
 			int size = mails->mail[i].size;
-			mails->mail[i].key_score += count * avg_size / size;
+
+			float sol = count * (avg_size) / (size);
+
+			mails->mail[i].key_score += sol;
 		}
 	}
 }
 
+// Functie care verifica daca jumatate din caracterele mail-ului sunt cu
+// CAPS sau nu
 void has_caps(emails *mails)
 {
 	char *str = malloc(STRINGLEN * sizeof(char));
@@ -284,6 +308,8 @@ void has_caps(emails *mails)
 	free(str);
 }
 
+// Functie care verifica daca mail-ul depaseste de cel putin doua ori marimea
+// medie a mail-urilor
 void is_longf(emails *mails)
 {
 	float avg_size = mails->avg_size;
@@ -294,18 +320,7 @@ void is_longf(emails *mails)
 	}
 }
 
-/*void link_count(emails *mails)
-{
-	char *str = malloc(STRINGLEN * sizeof(char));
-
-	for (int i = 0; i < mails->mail_nr; i++) {
-		FILE *fp = fopen(mails->mail->mail_nr, "r");
-
-		fclose(fp);
-	}
-
-	free(str);
-}*/
+// Functie care salveaza adresele de mail care sunt cunoscute ca trimit spam
 void save_spammers(spammers *spams)
 {
 	FILE *fp = fopen(SPAMMERS, "r");
@@ -329,6 +344,8 @@ void save_spammers(spammers *spams)
 	fclose(fp);
 }
 
+// Functie care atribuie scorul adreselor cunoscute ca spameaza mail-urilor
+// trimise de acestea
 void check_spammers(emails *mails, spammers *spams)
 {
 	char *str = malloc(MAILLEN * sizeof(char));
@@ -359,20 +376,19 @@ void check_spammers(emails *mails, spammers *spams)
 	free(str);
 }
 
+// Functie care verifica daca un mail este spam sau nu
 void is_spamf(emails *mails)
 {
 	float key_score;
 	float avg_size = mails->avg_size;
 	int has_caps;
 	int spam_score;
-	int is_long;
 
 	for (int i = 0; i < mails->mail_nr; i++) {
 		float score = 0;
 		key_score = mails->mail[i].key_score;
 		has_caps = mails->mail[i].has_caps;
 		spam_score = mails->mail[i].spam_score;
-		is_long = mails->mail->is_long;
 
 		score = 7 * key_score + 30 * has_caps + spam_score;
 
@@ -382,6 +398,7 @@ void is_spamf(emails *mails)
 	}
 }
 
+// Functie care afiseaza cerinta task-ului doi
 void print_task2(emails *mails)
 {
 	FILE *fp = fopen("prediction.out", "w");
@@ -392,6 +409,7 @@ void print_task2(emails *mails)
 	fclose(fp);
 }
 
+// Functie care elibereaza memoria alocata
 void free_all(emails *mails, keywords *keyword, spammers *spams)
 {
 	for (int i = 0; i < mails->mail_nr; i++)
@@ -406,6 +424,10 @@ void free_all(emails *mails, keywords *keyword, spammers *spams)
 	free(keyword);
 }
 
+// Functie care afiseaza datele memorate in structurile create de mine,
+// date precum: deviatia standard a keyword-urilor, cate aparitii are fiecare,
+// lungie fiecarui mail, numarul de aparitii ai fiecarui keyword in fiecare
+// dintre mail-uri, etc.
 void logs(emails *mails, keywords *keyword)
 {
 	FILE *fp = fopen("logs.txt", "w");
@@ -417,6 +439,7 @@ void logs(emails *mails, keywords *keyword)
 			fprintf(fp, "-----Additional Keywords-----\n");
 		fprintf(fp, "%s:\n", keyword->words[i].word);
 		fprintf(fp, "\tstdev = %.6f\n", keyword->words[i].stdev);
+		fprintf(fp, "\tavg_stdev = %.6f\n", keyword->avg_stdev);
 		fprintf(fp, "\tcount = %d\n", keyword->words[i].count);
 	}
 
@@ -424,6 +447,7 @@ void logs(emails *mails, keywords *keyword)
 		if (i == 0)
 			fprintf(fp, "-------------Mails-----------\n");
 
+		fprintf(fp, "-----------------Mail %d---------------\n", i);
 		fprintf(fp, "%s:\n", mails->mail[i].mail_nr);
 		fprintf(fp, "\tsize = %d\n", mails->mail[i].size);
 		fprintf(fp, "\tchar_size = %d\n", mails->mail[i].char_size);
@@ -435,8 +459,9 @@ void logs(emails *mails, keywords *keyword)
 
 		fprintf(fp, "-----------Word counter---------------\n");
 		for (int j = 0; j < keyword->ext_word_nr; j++) {
-			fprintf(fp, "\t%s :", keyword->words[j].word);
-			fprintf(fp, " %d\n", mails->mail[i].word_count[j]);
+			fprintf(fp, "\t%12s :", keyword->words[j].word);
+			fprintf(fp, " %d", mails->mail[i].word_count[j]);
+			fprintf(fp, "\t%.6f\n", keyword->words[j].stdev);
 		}
 		fprintf(fp, "-----------Finished Word counter--------------\n");
 	}

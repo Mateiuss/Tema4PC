@@ -1,9 +1,37 @@
-# Tema4PC
+# Tema 4: spam_detector
 
-..............................
-...................................
-..........................................
-......................
-.......................
-....................
-................................
+Pentru implementarea acestei teme m-am folosit de 5 fisiere (fara README), fisiere a caror utilizare o voi explica in cele ce urmeaza:
+
+## spam_detector.c:
+- Acesta este fisierul main al programului;
+- Contine declararea pointerilor catre structurile folosite, alocarea memoriei pentru ele si apelarea functiilor create pentru rezolvarea problemei.
+
+## functions.c:
+- Acesta este fisierul care contine rezolvarea propriu-zisa a problemei;
+- Contine functii precum:
+  - functiile de citire pentru mail-uri, keyword-uri si pentru adresele cunoscute ca ar trimite mail-uri de spam. Pe deasupra, contine si o functie care adauga keyword-urile aditionale;
+  - functiile care se ocupa de calculul efectiv, precum calcularea numarului da aparitii al keyword-urilor (atat pentru fiecare email, cat si overall), deviatia standard, marimile mail-urilor (+ marimea medie), keyword score-ul, etc;
+  - functiile de afisare: pentru primul si al doilea task;
+  - functia de eliberare a memoriei utilizate;
+  - si in cele din urma, functia care afiseaza datele memorate in structurile folosite (logs), pentru a putea observa mai bine datele memorate in structurile folosite.
+
+## headers.h:
+- Acesta este fisierul in care am scris:
+  - bibliotecile folosite;
+  - DEFINE-uri, precum caile catre directorul in care sunt mail-urile, keyword-uri, spammers, dar si pentru lungimile sirurilor;
+  - definitiile structurilor folosite
+  - prototipurile functiile din functions.c pe care le-am apelat in spam_detector.c.
+
+## Makefile:
+- Contine doua reguli:
+  - build
+  - clean
+
+## additional_keywords:
+- Acesta este fisierul in care am adaugat numarul de keyword-uri suplimentare si denumirile acestora
+
+# Modificari pentru imbunatatirea scorului:
+
+- Am schimbat formula pentru calcularea scorului final:
+score(mail) = 7 * keywordsScore(mail,kwords) + 30 * hasCaps(mail) + spammers(mail).
+- Am selectat cuvintele pentru additional_keywords, verificand manual mail-urile considerate SPAM pentru a vedea cuvintele utilizate frecvent.

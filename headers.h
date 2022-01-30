@@ -1,9 +1,12 @@
+// Bibliotecile folosite
 #define _GNU_SOURCE
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+// DEFINE-urile folosite
 #define STATISTICS "statistics.out"
 #define EMAILS "data/emails"
 #define KEYWORDS "data/keywords"
@@ -13,18 +16,23 @@
 #define MAILLEN 100
 #define STRINGLEN 1000
 
+// Structura pentru un singur keyword
 typedef struct {
 	char word[WORDLEN];
 	float stdev;
 	int count;
 } kword;
 
+// Strucutra care inglobeaza fiecare keyword si memoreaza date generale
+// despre acestea
 typedef struct {
 	kword *words;
 	int word_nr;
 	int ext_word_nr;
+	float avg_stdev;
 } keywords;
 
+// Structura pentru un singur mail
 typedef struct {
 	int *word_count;
 	int recon_words;
@@ -40,22 +48,27 @@ typedef struct {
 	char mail_nr[20];
 } email;
 
+// Structura care inglobeaza toate mail-urile si retine date generale despre
+// acestea
 typedef struct {
 	email *mail;
 	int mail_nr;
 	float avg_size;
 } emails;
 
+// Functie care memoreaza o adresa
 typedef struct {
 	char address[MAILLEN];
 	int score;
 } spammer;
 
+// Functie care inglobeaza toate adresele si retine date generale despre ele
 typedef struct {
 	spammer *spammers;
 	int spam_nr;
 } spammers;
 
+// Prototipele functiilor din functions.c utilizate in spam_detector.c
 int email_nr(void);
 
 void read_keywords(keywords *keyword);
